@@ -3,6 +3,7 @@ import curses
 import time
 import configparser
 import os
+import subprocess
 
 NOCOL = -1
 BLACK = curses.COLOR_BLACK
@@ -47,7 +48,6 @@ def main(stdscr):
     while True:
         query_print = "Query: " + query
         stdscr.addstr(0, 0, "{0:{1}}".format(query_print, maxx))
-        stdscr.addstr(1, 0, str(s))
         control_menu = curses.newwin(3, 17, 3, 3)
         if ((time.time() - do_search) > 1.0 and query != last_query) or force_query:
             force_query = False
@@ -130,4 +130,10 @@ def main(stdscr):
                 pass
 
 if __name__ == '__main__':
-    print(curses.wrapper(main))
+    url = curses.wrapper(main)
+    if url:
+        try:
+            subprocess.Popen(['xdg-open', url])
+        except Exception:
+            print("Failed xdg-open")
+            print(url)
