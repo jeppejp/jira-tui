@@ -1,4 +1,5 @@
 import Jira
+import sys
 import curses
 import time
 import configparser
@@ -19,7 +20,10 @@ WHITE = curses.COLOR_WHITE
 def main(stdscr):
     cf = configparser.ConfigParser()
     cf.read(os.path.expanduser('~/.config/jira-cli.conf'))
-    myjira = Jira.Jira(cf['jira-cli']['url'], cf['jira-cli']['user'], cf['jira-cli']['password'])
+    url = cf['jira-cli']['url']
+    username = cf['jira-cli']['user']
+    password = cf['jira-cli']['password']
+    myjira = Jira.Jira(url, username, password)
     stdscr.timeout(100)
     curses.start_color()
     curses.use_default_colors()
@@ -40,7 +44,6 @@ def main(stdscr):
     curses.init_pair(2, curses.COLOR_GREEN, -1)
     curses.init_pair(3, curses.COLOR_BLUE, -1)
     curses.init_pair(4, curses.COLOR_YELLOW, -1)
-
 
     curses.init_pair(10, curses.COLOR_BLACK, curses.COLOR_WHITE)
     s = 0
@@ -83,20 +86,20 @@ def main(stdscr):
             control_menu.addstr(4, 1, "F3 only unresolved")
             stdscr.refresh()
             control_menu.refresh()
-        
+
         options_str = ''
         if only_me:
             options_str += "[only me] "
         if only_open:
             options_str += "[only unres]"
         options_print = "{0:{1}}".format(options_str, maxx - 1)
-        stdscr.addstr(maxy-1, 0, options_print)
-        
+        stdscr.addstr(maxy - 1, 0, options_print)
+
         try:
             s = stdscr.getch()
         except KeyboardInterrupt:
             return
-        if s == 27: # ESC
+        if s == 27:  # ESC
             return
         elif s == curses.KEY_DOWN:
             idx += 1
@@ -104,24 +107,24 @@ def main(stdscr):
         elif s == curses.KEY_UP:
             idx -= 1
             idx = max(idx, 0)
-        elif s == curses.KEY_BACKSPACE: # Backspace
+        elif s == curses.KEY_BACKSPACE:  # Backspace
             query = query[:-1]
             do_search = time.time()
             idx = 0
-        elif s == 265: # F1
+        elif s == 265:  # F1
             view_help = not view_help
-        elif s == 266: # F2
+        elif s == 266:  # F2
             only_me = not only_me
             force_query = True
         elif s == 267:
             only_open = not only_open
             force_query = True
-        elif s == 10: # return
+        elif s == 10:  # return
             if idx < len(results):
                 return results[idx]['url']
             else:
                 return ''
-        elif s < 256: # perhaps a valid char...
+        elif s < 256:  # perhaps a valid char...
             try:
                 query += chr(s)
                 do_search = time.time()
@@ -129,8 +132,14 @@ def main(stdscr):
             except ValueError:
                 pass
 
+
 if __name__ == '__main__':
-    url = curses.wrapper(main)
+    try:
+        url = curses.wrapper(main)
+    except KeyError as e:
+        print("Failed to extract config. Have you filled ~/.config/jira-cli.conf ??")
+        print("Exception {}".format(e))
+        sys.exit(-1)
     if url:
         try:
             subprocess.Popen(['xdg-open', url])
