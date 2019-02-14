@@ -1,4 +1,4 @@
-import Jira
+from . import Jira
 import sys
 import curses
 import time
@@ -17,7 +17,7 @@ CYAN = curses.COLOR_CYAN
 WHITE = curses.COLOR_WHITE
 
 
-def main(stdscr):
+def main_view(stdscr):
     cf = configparser.ConfigParser()
     cf.read(os.path.expanduser('~/.config/jira-cli.conf'))
     url = cf['jira-cli']['url']
@@ -133,9 +133,9 @@ def main(stdscr):
                 pass
 
 
-if __name__ == '__main__':
+def main():
     try:
-        url = curses.wrapper(main)
+        url = curses.wrapper(main_view)
     except KeyError as e:
         print("Failed to extract config. Have you filled ~/.config/jira-cli.conf ??")
         print("Exception {}".format(e))
@@ -146,3 +146,7 @@ if __name__ == '__main__':
         except Exception:
             print("Failed xdg-open")
             print(url)
+
+
+if __name__ == '__main__':
+    main()
